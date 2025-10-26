@@ -1,4 +1,4 @@
-# Media Server 💠
+# Video Server 💠
 
 A modern, lightweight media server designed for local and private streaming.  
 It allows you to browse, upload, and stream your personal videos.
