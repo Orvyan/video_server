@@ -7,7 +7,6 @@ It allows you to browse, upload, and stream your personal videos.
 
 ## ✨ Features
 
-- **File Management** – browse, upload, move, and delete files and folders  
 - **Media Streaming** – stream videos directly in your browser  
 - **Cross-Platform Access** – works on desktop, mobile, and tablet  
 - **Local Privacy** – no cloud storage, no tracking, full local control  
