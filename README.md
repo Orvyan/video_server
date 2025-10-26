@@ -42,7 +42,7 @@ It will include:
 ## 🔧 Installation
 1. Clone the repository  
    ```bash
-   git clone https://github.com/yourusername/media-server.git
+   https://github.com/Orvyan/video_server.git
    cd media-server
    ```
 2. Install dependencies  
@@ -77,10 +77,8 @@ It will include:
 ---
 
 ## 🛡️ Security Notes
-- Sessions use `httpOnly` and `sameSite=lax` cookies  
 - Passwords are securely hashed with **bcrypt**  
 - Use `HTTPS` in production for encrypted connections  
-- Never expose `users.json` publicly  
 
 ---
 
