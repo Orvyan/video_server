@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🔐 Sign in</title>
+  <link rel="stylesheet" href="/arcturus/auth.css" />
+</head>
+<body>
+  <main id="auth-root">
+    <section id="auth-card" aria-live="polite">
+      <header class="head">
+        <div class="logo">⭑</div>
+        <h1 id="formTitle">Sign in</h1>
+        <p class="sub">Welcome back. Please sign in.</p>
+      </header>
+
+      <div id="alert" class="alert" role="alert" aria-live="assertive" hidden>
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-text">
+          <strong id="alert-title">Sign in failed</strong>
+          <div id="alert-msg">Please check your credentials.</div>
+        </div>
+        <button id="alert-close" class="alert-close" aria-label="Close error">✕</button>
+      </div>
+
+      <form id="authForm" action="/login" method="post" novalidate>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" placeholder="e.g. juy" required autocomplete="username" />
+          <small class="msg" id="userMsg"></small>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pwd-wrap">
+            <input id="password" name="password" type="password" placeholder="••••••••" required autocomplete="current-password" />
+            <button type="button" class="eye" id="togglePwd" aria-label="Show password">👁️</button>
+          </div>
+          <small class="msg" id="passMsg"></small>
+
+          <div class="meter" id="pwdMeter" hidden>
+            <div class="bar"></div>
+            <span class="hint" id="pwdHint">Password strength</span>
+          </div>
+          <div class="caps" id="capsWarn" hidden>⇪ Caps Lock is on</div>
+        </div>
+
+        <button id="submitBtn" class="primary" type="submit">Sign in</button>
+
+        <div class="swap">
+          <span id="toggleAuth" role="button" tabindex="0">New here? Create account</span>
+        </div>
+      </form>
+    </section>
+
+    <footer class="foot">
+      <small>Arcturus • Session-based • Local</small>
+    </footer>
+  </main>
+
+  <script>
+    
+    const card = document.getElementById('auth-card');
+    const form = document.getElementById('authForm');
+    const title = document.getElementById('formTitle');
+    const toggleAuth = document.getElementById('toggleAuth');
+    const togglePwd = document.getElementById('togglePwd');
+    const username = document.getElementById('username');
+    const password = document.getElementById('password');
+    const submitBtn = document.getElementById('submitBtn');
+    const userMsg = document.getElementById('userMsg');
+    const passMsg = document.getElementById('passMsg');
+    const pwdMeter = document.getElementById('pwdMeter');
+    const pwdBar = pwdMeter.querySelector('.bar');
+    const pwdHint = document.getElementById('pwdHint');
+    const capsWarn = document.getElementById('capsWarn');
+
+    const alertBox = document.getElementById('alert');
+    const alertTitle = document.getElementById('alert-title');
+    const alertMsg = document.getElementById('alert-msg');
+    const alertClose = document.getElementById('alert-close');
+
+    let isLogin = true;
+    let hideTimer = null;
+    let attemptedSubmit = false; 
+
+    hideAlert();
+    if (location.search) history.replaceState({}, '', location.pathname);
+
+    const savedUser = localStorage.getItem('arcturus.username');
+    if (savedUser) username.value = savedUser;
+    (username.value ? password : username).focus();
+
+    function setMode(login) {
+      isLogin = login;
+      title.textContent = login ? 'Sign in' : 'Create account';
+      form.action = login ? '/login' : '/register';
+      submitBtn.textContent = login ? 'Sign in' : 'Register';
+      toggleAuth.textContent = login ? 'New here? Create account' : 'Already have an account? Sign in';
+      pwdMeter.hidden = login;
+      password.setAttribute('autocomplete', login ? 'current-password' : 'new-password');
+      passMsg.textContent = '';
+      hideAlert(); 
+    }
+    setMode(true);
+
+    toggleAuth.addEventListener('click', () => setMode(!isLogin));
+    toggleAuth.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') setMode(!isLogin); });
+
+    togglePwd.addEventListener('click', () => {
+      const visible = password.type === 'text';
+      password.type = visible ? 'password' : 'text';
+      togglePwd.textContent = visible ? '👁️' : '🙈';
+      password.focus();
+    });
+
+    function syncCaps(e){
+      const isCaps = e.getModifierState && e.getModifierState('CapsLock');
+      capsWarn.hidden = !isCaps;
+    }
+    password.addEventListener('keydown', syncCaps);
+    password.addEventListener('keyup', syncCaps);
+
+    function scorePassword(pw) {
+      let s = 0;
+      if (pw.length >= 8) s++;
+      if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
+      if (/\d/.test(pw)) s++;
+      if (/[^A-Za-z0-9]/.test(pw)) s++;
+      return s;
+    }
+    function updateMeter(score) {
+      const per = [0,25,50,75,100][score];
+      const labels = ['Very weak','Weak','Okay','Good','Strong'];
+      pwdBar.style.width = per + '%';
+      pwdBar.dataset.level = String(score);
+      pwdHint.textContent = 'Password strength: ' + labels[score];
+    }
+    function validate() {
+      let ok = true;
+      userMsg.textContent = '';
+      passMsg.textContent = '';
+      if (!username.value.trim()) { userMsg.textContent = 'Please enter a username.'; ok = false; }
+      if (!password.value.trim()) { passMsg.textContent = 'Please enter a password.'; ok = false; }
+      if (!isLogin) {
+        const s = scorePassword(password.value);
+        updateMeter(s);
+        if (s < 2) { passMsg.textContent = 'Password is too weak.'; ok = false; }
+      }
+      submitBtn.disabled = !ok;
+      return ok;
+    }
+
+    username.addEventListener('input', () => { hideAlert(); validate(); });
+    password.addEventListener('input', () => { hideAlert(); validate(); });
+
+    function showAlert(titleText, msgText, { autohideMs = 4000 } = {}) {
+      if (!attemptedSubmit) return; 
+      alertTitle.textContent = titleText || 'Error';
+      alertMsg.textContent = msgText || 'Please try again.';
+      alertBox.hidden = false;
+
+  
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(hideAlert, autohideMs);
+    }
+    function hideAlert() {
+      alertBox.hidden = true;
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    }
+    alertClose.addEventListener('click', hideAlert);
+
+    form.addEventListener('submit', async (e) => {
+      if (!validate()) { e.preventDefault(); return; }
+      e.preventDefault();
+
+      attemptedSubmit = true; 
+      submitBtn.disabled = true;
+      localStorage.setItem('arcturus.username', username.value.trim());
+      hideAlert();
+
+      const body = new URLSearchParams();
+      body.set('username', username.value.trim());
+      body.set('password', password.value);
+
+      let res;
+      try {
+        res = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body
+        });
+      } catch {
+        submitBtn.disabled = false;
+        showAlert('No connection', 'The server is not reachable.');
+        return;
+      }
+
+      if (res.redirected) { location.href = res.url; return; }
+      if (res.ok) { location.href = '/arcturus/'; return; }
+
+      submitBtn.disabled = false;
+      password.value = '';
+      password.focus();
+
+      switch (res.status) {
+        case 401: showAlert('Sign in failed', 'Incorrect username or password.'); break;
+        case 409: showAlert('User exists', 'This username is already taken.'); break;
+        case 429: showAlert('Too many attempts', 'Please wait a moment and try again.'); break;
+        case 400: showAlert('Invalid input', 'Please fill out all fields correctly.'); break;
+        default: {
+          let txt = ''; try { txt = (await res.text() || '').trim(); } catch {}
+          showAlert('Error', txt || `Unexpected error (${res.status}).`);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

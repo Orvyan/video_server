@@ -1,0 +1,17 @@
+{
+  "name": "media-server",
+  "version": "1.0.0",
+  
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "chokidar": "^4.0.3",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mime": "^4.0.7"
+  }
+}
