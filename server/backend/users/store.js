@@ -37,7 +37,7 @@ async function verifyUser(username, password) {
   return bcrypt.compare(password, u.passwordHash);
 }
 
-// Migration: Klartext → Hash, wenn Login-Daten stimmen
+
 async function migratePlaintextIfNeeded(username, plain) {
   const users = await readUsers();
   const u = users[username];
