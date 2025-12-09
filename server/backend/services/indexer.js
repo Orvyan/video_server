@@ -13,8 +13,7 @@ function isAllowed(file) {
   return ALLOWED_EXTENSIONS.includes(path.extname(file).toLowerCase());
 }
 
-// Baut GENAU die alte Struktur nach:
-// Array von Einträgen [{ type:'folder'| 'file', name, path, children? }, ...]
+
 async function buildIndexArray(dir, root) {
   const entries = await fsp.readdir(dir, { withFileTypes: true });
   const out = [];
@@ -45,7 +44,7 @@ async function buildIndexArray(dir, root) {
 }
 
 async function buildIndex() {
-  // Wichtig: wie früher → direkt das ARRAY zurückgeben, NICHT ein Root-Objekt.
+  
   return buildIndexArray(MEDIA_ROOT, MEDIA_ROOT);
 }
 
@@ -57,7 +56,7 @@ async function getIndex() {
   return cachedIndex;
 }
 
-// Cache invalidieren bei Änderungen
+
 const watcher = chokidar.watch(MEDIA_ROOT, { ignoreInitial: true, ignored: /(^|[\/\\])\../ });
 watcher.on('all', () => { cachedIndex = null; });
 
